@@ -1,74 +1,66 @@
-const taskInput = document.getElementById('taskInput');
-const addTaskBtn = document.getElementById('addTaskBtn');
-const aiSuggestBtn = document.getElementById('aiSuggestBtn');
-const taskList = document.getElementById('taskList');
-const apiKeyInput = document.getElementById('apiKeyInput');
-const saveKeyBtn = document.getElementById('saveKeyBtn');
-const aiLoading = document.getElementById('aiLoading');
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Powered To-Do List</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-let apiKey = localStorage.getItem('gemini_api_key') || '';
+  <!-- 1. GİRİŞ VE KAYIT EKRANI -->
+  <div id="authContainer" class="glass-card">
+    <header>
+      <h1>Giriş Yap / Kaydol 🔐</h1>
+      <p>Kendi hesabınla devam et</p>
+    </header>
+    <div class="auth-form">
+      <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" />
+      <input type="password" id="passwordInput" placeholder="Şifre" />
+      <div class="auth-buttons">
+        <button id="loginBtn" class="primary-btn">Giriş Yap</button>
+        <button id="registerBtn" class="ai-btn">Kayıt Ol</button>
+      </div>
+    </div>
+  </div>
 
-if (apiKey) apiKeyInput.value = apiKey;
+  <!-- 2. ANA UYGULAMA EKRANI -->
+  <div id="appContainer" class="glass-card hidden">
+    <header class="app-header">
+      <div>
+        <h1>AI To-Do List 🚀</h1>
+        <p>Hoş geldin, <strong id="userDisplayName"></strong>!</p>
+      </div>
+      <button id="logoutBtn" class="delete-btn">Çıkış Yap</button>
+    </header>
 
-function renderTasks() {
-  taskList.innerHTML = '';
-  tasks.forEach((task, index) => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span>${task}</span><button class="delete-btn" onclick="deleteTask(${index})">Sil</button>`;
-    taskList.appendChild(li);
-  });
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-}
+    <!-- GİZLİ API KEY ALANI -->
+    <div class="api-section">
+      <div id="apiInputGroup" class="api-input-group">
+        <input type="password" id="apiKeyInput" placeholder="Gemini API Key Girin..." />
+        <button id="saveKeyBtn">Kaydet</button>
+      </div>
+      
+      <div id="apiSavedGroup" class="api-saved-group hidden">
+        <span class="api-status">🔒 API Anahtarı Güvenli Bir Şekilde Kaydedildi</span>
+        <button id="resetKeyBtn" class="reset-btn">Değiştir</button>
+      </div>
+      <button id="notifyPermissionBtn" class="notify-btn">🔔 Bildirim</button>
+    </div>
 
-addTaskBtn.addEventListener('click', () => {
-  if (taskInput.value.trim() !== '') {
-    tasks.push(taskInput.value.trim());
-    taskInput.value = '';
-    renderTasks();
-  }
-});
+    <div class="input-section">
+      <input type="text" id="taskInput" placeholder="Yeni bir görev yazın..." />
+      <input type="datetime-local" id="taskDateInput" />
+      <button id="addTaskBtn" class="primary-btn">Ekle</button>
+      <button id="aiSuggestBtn" class="ai-btn">✨ AI Öneri Al</button>
+    </div>
 
-function deleteTask(index) {
-  tasks.splice(index, 1);
-  renderTasks();
-}
+    <div id="aiLoading" class="hidden">Gemini düşünceler topluyor... 🤖</div>
 
-saveKeyBtn.addEventListener('click', () => {
-  apiKey = apiKeyInput.value.trim();
-  localStorage.setItem('gemini_api_key', apiKey);
-  alert('API Key kaydedildi!');
-});
+    <ul id="taskList"></ul>
+  </div>
 
-aiSuggestBtn.addEventListener('click', async () => {
-  if (!apiKey) {
-    alert('Lütfen önce Gemini API Key alanını doldurun ve kaydedin.');
-    return;
-  }
-  aiLoading.classList.remove('hidden');
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Bana gün içinde yapılabilecek verimli 1 adet kısa görev önerisi ver. Sadece görevin metnini yaz, ek açıklama yapma." }] }]
-      })
-    });
-    const data = await response.json();
-    
-    if (data.error) {
-      alert('API Hatası: ' + data.error.message);
-      return;
-    }
-    
-    const suggestion = data.candidates[0].content.parts[0].text.trim();
-    taskInput.value = suggestion;
-  } catch (error) {
-    alert('AI önerisi alınırken bir hata oluştu. Lütfen API Keyinizin doğruluğunu kontrol edin.');
-    console.error(error);
-  } finally {
-    aiLoading.classList.add('hidden');
-  }
-});
-
-renderTasks();
+  <script src="app.js"></script>
+</body>
+</html>
