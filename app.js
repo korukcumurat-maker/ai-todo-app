@@ -51,14 +51,20 @@ aiSuggestBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "Bana yazılımcılar için gün içinde yapılabilecek verimli 1 adet kısa görev önerisi ver. Sadece görevin metnini yaz, ek açıklama yapma." }] }]
+        contents: [{ parts: [{ text: "Bana gün içinde yapılabilecek verimli 1 adet kısa görev önerisi ver. Sadece görevin metnini yaz, ek açıklama yapma." }] }]
       })
     });
     const data = await response.json();
+    
+    if (data.error) {
+      alert('API Hatası: ' + data.error.message);
+      return;
+    }
+    
     const suggestion = data.candidates[0].content.parts[0].text.trim();
     taskInput.value = suggestion;
   } catch (error) {
-    alert('AI önerisi alınırken bir hata oluştu. API Keyinizi kontrol edin.');
+    alert('AI önerisi alınırken bir hata oluştu. Lütfen API Keyinizin doğruluğunu kontrol edin.');
     console.error(error);
   } finally {
     aiLoading.classList.add('hidden');
