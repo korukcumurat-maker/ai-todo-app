@@ -39,8 +39,8 @@ function updateProgress() {
   }
   const completedCount = tasks.filter(t => t.completed).length;
   const percent = Math.round((completedCount / tasks.length) * 100);
-  progressBar.style.width = `${percent}%`;
-  progressText.textContent = `${completedCount}/${tasks.length} Tamamlandı (%${percent})`;
+  progressBar.style.width = percent + '%';
+  progressText.textContent = completedCount + '/' + tasks.length + ' Tamamlandı (%' + percent + ')';
 }
 
 function renderTasks() {
@@ -108,7 +108,6 @@ saveKeyBtn.addEventListener('click', () => {
   alert('API Key kaydedildi!');
 });
 
-// AI Öneri
 aiSuggestBtn.addEventListener('click', async () => {
   if (!apiKey) return alert('Lütfen Gemini API Key kaydedin.');
   aiLoading.classList.remove('hidden');
@@ -117,7 +116,7 @@ aiSuggestBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "Günlük verimlilik için kısa ve net 1 adet görev önerisi yaz." }] }]
+        contents: [{ parts: [{ text: 'Günlük verimlilik için kısa ve net 1 adet görev önerisi yaz.' }] }]
       })
     });
     const data = await response.json();
@@ -130,7 +129,6 @@ aiSuggestBtn.addEventListener('click', async () => {
   }
 });
 
-// AI Öncelik Analizi
 aiAnalyzeBtn.addEventListener('click', async () => {
   if (!apiKey) return alert('Lütfen Gemini API Key kaydedin.');
   const activeTasks = tasks.filter(t => !t.completed);
@@ -139,8 +137,7 @@ aiAnalyzeBtn.addEventListener('click', async () => {
   aiLoading.classList.remove('hidden');
   aiAnalysisResult.classList.add('hidden');
 
-  const promptText = `Aşağıdaki görev listesini incele ve kullanıcının bugün ilk olarak hangi göreve odaklanması gerektiğini 2 kısa cümleyle tavsiye et:\n` + 
-    activeTasks.map(t => `- ${t.text} (Kategori: ${t.category}, Öncelik: ${t.priority})`).join('\n');
+  const promptText = `Aşağıdaki görev listesini incele ve kullanıcının bugün ilk olarak hangi göreve odaklanması gerektiğini 2 kısa cümleyle tavsiye et:\n${activeTasks.map(t => `- ${t.text} (Kategori: ${t.category}, Öncelik: ${t.priority})`).join('\n')}`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
@@ -151,7 +148,7 @@ aiAnalyzeBtn.addEventListener('click', async () => {
     const data = await response.json();
     if (data.error) return alert('API Hatası: ' + data.error.message);
 
-    aiAnalysisResult.textContent = "💡 AI Tavsiyesi: " + data.candidates[0].content.parts[0].text.trim();
+    aiAnalysisResult.textContent = '💡 AI Tavsiyesi: ' + data.candidates[0].content.parts[0].text.trim();
     aiAnalysisResult.classList.remove('hidden');
   } catch (e) {
     alert('Analiz yapılırken hata oluştu.');
@@ -160,7 +157,6 @@ aiAnalyzeBtn.addEventListener('click', async () => {
   }
 });
 
-// AI Veri Analizi (Performans ve İstatistik Raporu)
 aiDataAnalysisBtn.addEventListener('click', async () => {
   if (!apiKey) return alert('Lütfen Gemini API Key kaydedin.');
   if (tasks.length === 0) return alert('Analiz edilecek veri bulunmuyor. Lütfen önce birkaç görev ekleyin.');
@@ -171,18 +167,7 @@ aiDataAnalysisBtn.addEventListener('click', async () => {
   const completedCount = tasks.filter(t => t.completed).length;
   const pendingCount = tasks.length - completedCount;
 
-  const promptText = `Sen profesyonel bir veri analistisin. Kullanıcının görev verilerini analiz et ve kısa, şık bir Verimlilik Raporu sun.
-Mevcut Veriler:
-- Toplam Görev: ${tasks.length}
-- Tamamlanan: ${completedCount}
-- Bekleyen: ${pendingCount}
-- Görev Detayları: ${JSON.stringify(tasks)}
-
-Lütfen şunları içer:
-1. 📊 Genel Verimlilik Puanı (100 üzerinden)
-2. 🏆 En çok odaklanılan kategoriler
-3. 📈 Verimliliği artırmak için 1 adet altın tavsiye.
-Yanıtın kısa, motive edici ve maddeler halinde olsun.`;
+  const promptText = `Sen verimlilik analistisin. Kullanıcının görev verilerini incele:\nToplam: ${tasks.length}, Tamamlanan: ${completedCount}, Bekleyen: ${pendingCount}\nListeler: ${JSON.stringify(tasks)}\n1. Verimlilik puanı ver (100 üzerinden).\n2. Kategori dağılımını yorumla.\n3. 1 adet altın tavsiye ver. Yanıtı kısa ve maddeler halinde yaz.`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
