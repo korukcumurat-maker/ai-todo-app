@@ -192,3 +192,25 @@ button {
   line-height: 1.4;
   color: #e9d5ff;
 }
+/* AI Veri Analizi Butonu & Kutusu */
+.ai-data-btn {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+.ai-data-btn:hover {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.ai-data-box {
+  background: rgba(30, 58, 138, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  color: #dbeafe;
+  white-space: pre-line;
+}
