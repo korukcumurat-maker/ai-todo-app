@@ -1,47 +1,92 @@
 const taskInput = document.getElementById('taskInput');
 const taskDateInput = document.getElementById('taskDateInput');
+const taskCategoryInput = document.getElementById('taskCategoryInput');
+const taskPriorityInput = document.getElementById('taskPriorityInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const aiSuggestBtn = document.getElementById('aiSuggestBtn');
+const aiAnalyzeBtn = document.getElementById('aiAnalyzeBtn');
 const taskList = document.getElementById('taskList');
 const apiKeyInput = document.getElementById('apiKeyInput');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
 const aiLoading = document.getElementById('aiLoading');
+const aiAnalysisResult = document.getElementById('aiAnalysisResult');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+const filterBtns = document.querySelectorAll('.filter-btn');
 
 let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 let apiKey = localStorage.getItem('gemini_api_key') || '';
+let currentFilter = 'all';
 
 if (apiKey) apiKeyInput.value = apiKey;
 
+// Filtre Butonları Mantığı
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderTasks();
+  });
+});
+
+// İlerleme Çubuğunu Güncelleme
+function updateProgress() {
+  if (tasks.length === 0) {
+    progressBar.style.width = '0%';
+    progressText.textContent = '0/0 Tamamlandı (%0)';
+    return;
+  }
+  const completedCount = tasks.filter(t => t.completed).length;
+  const percent = Math.round((completedCount / tasks.length) * 100);
+  progressBar.style.width = `${percent}%`;
+  progressText.textContent = `${completedCount}/${tasks.length} Tamamlandı (%${percent})`;
+}
+
+// Görevleri Ekrana Çizme
 function renderTasks() {
   taskList.innerHTML = '';
-  tasks.forEach((task, index) => {
-    const taskText = typeof task === 'string' ? task : task.text;
-    const isCompleted = typeof task === 'object' && task.completed;
-    const taskDate = (typeof task === 'object' && task.date) ? task.date : '';
 
+  const filteredTasks = tasks.filter(t => {
+    if (currentFilter === 'active') return !t.completed;
+    if (currentFilter === 'completed') return t.completed;
+    return true;
+  });
+
+  filteredTasks.forEach((task) => {
+    const originalIndex = tasks.indexOf(task);
     const li = document.createElement('li');
-    if (isCompleted) li.classList.add('completed');
+    if (task.completed) li.classList.add('completed');
 
-    const formattedDate = taskDate ? new Date(taskDate).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    const formattedDate = task.date ? new Date(task.date).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '';
 
     li.innerHTML = `
-      <div class="task-info" onclick="toggleTask(${index})">
-        <span class="task-text">${taskText}</span>
-        ${formattedDate ? `<span class="task-date">📅 ${formattedDate}</span>` : ''}
+      <div class="task-info" onclick="toggleTask(${originalIndex})">
+        <span class="task-text">${task.text}</span>
+        <div class="task-meta">
+          <span class="badge badge-cat">${task.category || 'Genel'}</span>
+          <span class="badge priority-${task.priority || 'Orta'}">• ${task.priority || 'Orta'}</span>
+          ${formattedDate ? `<span class="task-date">📅 ${formattedDate}</span>` : ''}
+        </div>
       </div>
-      <button class="delete-btn" onclick="deleteTask(${index})">Sil</button>
+      <button class="delete-btn" onclick="deleteTask(${originalIndex})">Sil</button>
     `;
     taskList.appendChild(li);
   });
+
   localStorage.setItem('tasks', JSON.stringify(tasks));
+  updateProgress();
 }
 
+// Görev Ekleme
 addTaskBtn.addEventListener('click', () => {
   if (taskInput.value.trim() !== '') {
     tasks.push({
       text: taskInput.value.trim(),
       completed: false,
-      date: taskDateInput.value
+      date: taskDateInput.value,
+      category: taskCategoryInput.value,
+      priority: taskPriorityInput.value
     });
     taskInput.value = '';
     taskDateInput.value = '';
@@ -50,11 +95,7 @@ addTaskBtn.addEventListener('click', () => {
 });
 
 function toggleTask(index) {
-  if (typeof tasks[index] === 'string') {
-    tasks[index] = { text: tasks[index], completed: true, date: '' };
-  } else {
-    tasks[index].completed = !tasks[index].completed;
-  }
+  tasks[index].completed = !tasks[index].completed;
   renderTasks();
 }
 
@@ -69,32 +110,53 @@ saveKeyBtn.addEventListener('click', () => {
   alert('API Key kaydedildi!');
 });
 
+// AI Öneri Alma
 aiSuggestBtn.addEventListener('click', async () => {
-  if (!apiKey) {
-    alert('Lütfen önce Gemini API Key alanını doldurun ve kaydedin.');
-    return;
-  }
+  if (!apiKey) return alert('Lütfen Gemini API Key kaydedin.');
   aiLoading.classList.remove('hidden');
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "Bana gün içinde yapılabilecek verimli 1 adet kısa görev önerisi ver. Sadece görevin metnini yaz, ek açıklama yapma." }] }]
+        contents: [{ parts: [{ text: "Günlük verimlilik için kısa ve net 1 adet görev önerisi yaz." }] }]
       })
     });
     const data = await response.json();
-    
-    if (data.error) {
-      alert('API Hatası: ' + data.error.message);
-      return;
-    }
-    
-    const suggestion = data.candidates[0].content.parts[0].text.trim();
-    taskInput.value = suggestion;
-  } catch (error) {
-    alert('AI önerisi alınırken bir hata oluştu.');
-    console.error(error);
+    if (data.error) return alert('API Hatası: ' + data.error.message);
+    taskInput.value = data.candidates[0].content.parts[0].text.trim();
+  } catch (e) {
+    alert('AI Hatası oluştu.');
+  } finally {
+    aiLoading.classList.add('hidden');
+  }
+});
+
+// AI Öncelik Analizi
+aiAnalyzeBtn.addEventListener('click', async () => {
+  if (!apiKey) return alert('Lütfen Gemini API Key kaydedin.');
+  const activeTasks = tasks.filter(t => !t.completed);
+  if (activeTasks.length === 0) return alert('Analiz edilecek aktif görev bulunmuyor.');
+
+  aiLoading.classList.remove('hidden');
+  aiAnalysisResult.classList.add('hidden');
+
+  const promptText = `Aşağıdaki görev listesini incele ve kullanıcının bugün ilk olarak hangi göreve odaklanması gerektiğini 2 kısa cümleyle tavsiye et:\n` + 
+    activeTasks.map(t => `- ${t.text} (Kategori: ${t.category}, Öncelik: ${t.priority})`).join('\n');
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+    });
+    const data = await response.json();
+    if (data.error) return alert('API Hatası: ' + data.error.message);
+
+    aiAnalysisResult.textContent = "💡 AI Tavsiyesi: " + data.candidates[0].content.parts[0].text.trim();
+    aiAnalysisResult.classList.remove('hidden');
+  } catch (e) {
+    alert('Analiz yapılırken hata oluştu.');
   } finally {
     aiLoading.classList.add('hidden');
   }
