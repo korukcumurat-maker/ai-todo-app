@@ -8,45 +8,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-  <!-- 1. GİRİŞ VE KAYIT EKRANI -->
-  <div id="authContainer" class="glass-card">
+  <div class="glass-card">
     <header>
-      <h1>Giriş Yap / Kaydol 🔐</h1>
-      <p>Kendi hesabınla devam et</p>
-    </header>
-    <div class="auth-form">
-      <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" />
-      <input type="password" id="passwordInput" placeholder="Şifre" />
-      <div class="auth-buttons">
-        <button id="loginBtn" class="primary-btn">Giriş Yap</button>
-        <button id="registerBtn" class="ai-btn">Kayıt Ol</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 2. ANA UYGULAMA EKRANI -->
-  <div id="appContainer" class="glass-card hidden">
-    <header class="app-header">
-      <div>
-        <h1>AI To-Do List 🚀</h1>
-        <p>Hoş geldin, <strong id="userDisplayName"></strong>!</p>
-      </div>
-      <button id="logoutBtn" class="delete-btn">Çıkış Yap</button>
+      <h1>AI To-Do List 🚀</h1>
+      <p>Gemini Destekli Akıllı Görev Yöneticisi</p>
     </header>
 
-    <!-- GİZLİ API KEY ALANI -->
     <div class="api-section">
-      <div id="apiInputGroup" class="api-input-group">
-        <input type="password" id="apiKeyInput" placeholder="Gemini API Key Girin..." />
-        <button id="saveKeyBtn">Kaydet</button>
-      </div>
-      
-      <div id="apiSavedGroup" class="api-saved-group hidden">
-        <span class="api-status">🔒 API Anahtarı Güvenli Bir Şekilde Kaydedildi</span>
-        <button id="resetKeyBtn" class="reset-btn">Değiştir</button>
-      </div>
-      <button id="notifyPermissionBtn" class="notify-btn">🔔 Bildirim</button>
+      <input type="password" id="apiKeyInput" placeholder="Gemini API Key Girin..." />
+      <button id="saveKeyBtn">Kaydet</button>
     </div>
 
     <div class="input-section">
