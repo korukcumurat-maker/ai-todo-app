@@ -1,28 +1,64 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Powered To-Do List</title>
+  <title>AI Günlük Ajanda & Verimlilik Platformu</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- ÜST KONTROL BAR -->
+  <div class="top-bar">
+    <button id="themeToggleBtn" class="icon-btn" title="Temayı Değiştir">🌙</button>
+    <button id="settingsToggleBtn" class="icon-btn" title="API Key Ayarları">⚙️</button>
+  </div>
+
+  <!-- GİZLİ API KEY MODALI -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>🔐 Gemini API Ayarları</h3>
+      <p>Yapay zeka asistanı ve günlük akıllı öneriler için API anahtarınızı girin.</p>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." />
+      <div class="modal-btns">
+        <button id="saveKeyBtn" class="primary-btn">Kaydet</button>
+        <button id="closeModalBtn" class="secondary-btn">Kapat</button>
+      </div>
+    </div>
+  </div>
+
   <div class="glass-card">
     <header>
-      <h1>AI To-Do List 🚀</h1>
-      <p>Gemini Destekli Akıllı Görev Yöneticisi</p>
+      <h1>Akıllı Günlük Ajanda 📅</h1>
+      <p>Gemini Destekli Günlük Planlama ve Verimlilik Asistanı</p>
     </header>
 
-    <!-- API KEY ALANI -->
-    <div class="api-section">
-      <input type="password" id="apiKeyInput" placeholder="Gemini API Key Girin..." />
-      <button id="saveKeyBtn">Kaydet</button>
+    <!-- OTOMATİK GÜNLÜK AI ÖNERİ / MOTİVASYON ALANI -->
+    <div id="dailyAiGreeting" class="daily-ai-box hidden">
+      <span class="ai-badge">✨ Günün AI Asistanı</span>
+      <p id="dailyAiText">Yapay zeka güne hazırlanıyor...</p>
+    </div>
+
+    <!-- KİŞİSEL NOT / GÜNÜN HEDEFİ -->
+    <div class="profile-section">
+      <input type="text" id="userProfileInput" placeholder="👤 Bugünün Ana Hedefi / Ruh Hali (İsteğe bağlı)..." />
+    </div>
+
+    <!-- TARİH SEÇİCİ VE GÖRÜNÜM MODU -->
+    <div class="date-control-section">
+      <div class="date-picker-wrapper">
+        <label for="activeDateSelect">Planlanan Gün:</label>
+        <input type="date" id="activeDateSelect" />
+      </div>
+      <div class="view-mode-wrapper">
+        <button id="viewModeBtn" class="secondary-btn" data-mode="day">📅 Sadece Bu Gün</button>
+      </div>
     </div>
 
     <!-- İLERLEME ÇUBUĞU -->
     <div class="progress-container">
       <div class="progress-info">
+        <span id="progressTitle">Bugünün İlerlemesi</span>
         <span id="progressText">0/0 Tamamlandı (%0)</span>
       </div>
       <div class="progress-bar-bg">
@@ -32,27 +68,35 @@
 
     <!-- GİRDİ FORMU -->
     <div class="input-section">
-      <input type="text" id="taskInput" placeholder="Yeni bir görev yazın..." />
-      <input type="datetime-local" id="taskDateInput" />
+      <input type="text" id="taskInput" placeholder="Yeni bir görev veya randevu yazın..." />
       
-      <select id="taskCategoryInput">
-        <option value="Genel">📁 Genel</option>
-        <option value="İş">💼 İş</option>
-        <option value="Kişisel">👤 Kişisel</option>
-        <option value="Alışveriş">🛒 Alışveriş</option>
-        <option value="Sağlık">❤️ Sağlık</option>
-      </select>
+      <div class="row-selects">
+        <!-- KATEGORİ SEÇİMİ + MANUEL EKLEME -->
+        <div class="category-select-group">
+          <select id="taskCategoryInput">
+            <!-- Dinamik dolacak -->
+          </select>
+          <button id="addCategoryBtn" class="icon-sub-btn" title="Yeni Kategori Ekle">+</button>
+        </div>
 
-      <select id="taskPriorityInput">
-        <option value="Düşük">🟢 Düşük</option>
-        <option value="Orta" selected>🟡 Orta</option>
-        <option value="Yüksek">🔴 Yüksek</option>
-      </select>
+        <select id="taskPriorityInput">
+          <option value="Düşük">🟢 Düşük</option>
+          <option value="Orta" selected>🟡 Orta</option>
+          <option value="Yüksek">🔴 Yüksek</option>
+        </select>
+      </div>
 
-      <button id="addTaskBtn" class="primary-btn">Ekle</button>
-      <button id="aiSuggestBtn" class="ai-btn">✨ AI Öneri</button>
-      <button id="aiAnalyzeBtn" class="ai-analyze-btn">🧠 AI Öncelik Analizi</button>
-      <button id="aiDataAnalysisBtn" class="ai-data-btn">📊 AI Veri Analizi</button>
+      <!-- SAAT SEÇİMİ (Opsiyonel) -->
+      <div class="time-input-row">
+        <input type="time" id="taskTimeInput" title="Saat (İsteğe bağlı)" />
+        <button id="addTaskBtn" class="primary-btn flex-grow">Görev Ekle</button>
+      </div>
+
+      <div class="action-buttons ai-action-row">
+        <button id="aiSuggestBtn" class="ai-btn">✨ Akıllı Görev Öner</button>
+        <button id="aiAnalyzeBtn" class="ai-analyze-btn">🧠 Günlük Plan Analizi</button>
+        <button id="aiDataAnalysisBtn" class="ai-data-btn">📊 Genel Veri Raporu</button>
+      </div>
     </div>
 
     <!-- FİLTRELEME BUTONLARI -->
@@ -62,7 +106,7 @@
       <button class="filter-btn" data-filter="completed">Tamamlanan</button>
     </div>
 
-    <div id="aiLoading" class="hidden">Gemini işlemlerinizi gerçekleştiriyor... 🤖</div>
+    <div id="aiLoading" class="hidden">Gemini verilerinizi işliyor... 🤖</div>
     <div id="aiAnalysisResult" class="ai-box hidden"></div>
     <div id="aiDataResult" class="ai-data-box hidden"></div>
 
