@@ -1,0 +1,103 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+header p { font-size: 0.9rem; color: #94a3b8; margin-bottom: 20px; }
+
+.api-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.api-section input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.input-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  outline: none;
+}
+
+button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.primary-btn { background: #6366f1; color: white; }
+.primary-btn:hover { background: #4f46e5; }
+
+.ai-btn { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
+.ai-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+#taskList { list-style: none; }
+
+#taskList li {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.delete-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.delete-btn:hover { background: #ef4444; color: white; }
+
+.hidden { display: none; }
+#aiLoading { color: #ec4899; font-size: 0.9rem; margin-bottom: 15px; font-weight: 600; }
