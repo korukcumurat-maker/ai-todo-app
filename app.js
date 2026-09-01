@@ -34,7 +34,6 @@ const settingsModal = document.getElementById('settingsModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-// Veri Yapıları & LocalStorage (Kategoriler ve Ayarlar yerel kalmaya devam eder)
 let tasks = [];
 let categories = JSON.parse(localStorage.getItem('categories')) || ['Genel', 'İş', 'Kişisel', 'Alışveriş', 'Sağlık'];
 let apiKey = localStorage.getItem('gemini_api_key') || '';
@@ -64,7 +63,6 @@ function initCategories() {
 }
 initCategories();
 
-// Tema ve Modal İşlemleri
 themeToggleBtn.addEventListener('click', () => {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
@@ -144,7 +142,6 @@ function updateProgress(filteredList) {
   progressTitle.textContent = viewMode === 'day' ? `${selectedDate} Tarihli Plan` : 'Tüm Zamanların Özeti';
 }
 
-// Supabase'den görevleri çekme
 async function fetchTasksFromSupabase() {
   const { data, error } = await supabase.from('todos').select('*');
   if (!error && data) {
@@ -173,9 +170,10 @@ function renderTasks() {
     const li = document.createElement('li');
     if (task.completed) li.classList.add('completed');
 
+    // title alanı veritabanındaki sütun adımızla birebir eşleştirildi
     li.innerHTML = `
       <div class="task-info" onclick="toggleTask('${task.id}')">
-        <span class="task-text">${task.title || task.text}</span>
+        <span class="task-text">${task.title || ''}</span>
         <div class="task-meta">
           <span class="badge">📁 ${task.category || 'Genel'}</span>
           <span class="badge priority-${task.priority || 'Orta'}">• ${task.priority || 'Orta'}</span>
@@ -191,7 +189,6 @@ function renderTasks() {
   updateProgress(scopedTasks);
 }
 
-// Supabase'e Görev Ekleme
 addTaskBtn.addEventListener('click', async () => {
   if (taskInput.value.trim() !== '') {
     const yeniGorev = {
@@ -209,12 +206,11 @@ addTaskBtn.addEventListener('click', async () => {
       taskTimeInput.value = '';
       fetchTasksFromSupabase();
     } else {
-      alert('Görev eklenirken hata oluştu.');
+      alert('Görev eklenirken hata oluştu: ' + error.message);
     }
   }
 });
 
-// Supabase'de Görev Durumunu Değiştirme
 async function toggleTask(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
@@ -230,7 +226,6 @@ async function toggleTask(id) {
   }
 }
 
-// Supabase'den Görev Silme
 async function deleteTask(id) {
   const { error } = await supabase
     .from('todos')
@@ -299,7 +294,7 @@ if (aiAnalyzeBtn) {
     aiLoading.classList.remove('hidden');
     aiAnalysisResult.classList.add('hidden');
 
-    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.title || t.text} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
+    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.title} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
@@ -349,6 +344,5 @@ if (aiDataAnalysisBtn) {
   });
 }
 
-// Uygulama Başlangıcı
 fetchTasksFromSupabase();
 if (apiKey) checkAndFetchDailyAi();
