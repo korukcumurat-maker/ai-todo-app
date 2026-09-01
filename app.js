@@ -1,3 +1,16 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabaseUrl = 'https://depelkxklehdmhutfhwn.supabase.co';
+const supabaseKey = 'sb_secret__b0BNiSCEEDB1qnGYcS0Bg_T_C0WsBz';
+const supabase = createClient(supabaseUrl, supabaseKey);
+async function fetchTasksFromSupabase() {
+  const { data, error } = await supabase.from('todos').select('*');
+  if (!error && data) {
+    tasks = data;
+    renderTasks();
+  }
+}
+
 const taskInput = document.getElementById('taskInput');
 const taskTimeInput = document.getElementById('taskTimeInput');
 const taskCategoryInput = document.getElementById('taskCategoryInput');
@@ -318,5 +331,5 @@ if (aiDataAnalysisBtn) {
 }
 
 // İlk Çalıştırma
-renderTasks();
+fetchTasksFromSupabase()
 if (apiKey) checkAndFetchDailyAi();
