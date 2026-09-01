@@ -3,13 +3,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const supabaseUrl = 'https://depelkxklehdmhutfhwn.supabase.co';
 const supabaseKey = 'sb_secret__b0BNiSCEEDB1qnGYcS0Bg_T_C0WsBz';
 const supabase = createClient(supabaseUrl, supabaseKey);
-async function fetchTasksFromSupabase() {
-  const { data, error } = await supabase.from('todos').select('*');
-  if (!error && data) {
-    tasks = data;
-    renderTasks();
-  }
-}
 
 const taskInput = document.getElementById('taskInput');
 const taskTimeInput = document.getElementById('taskTimeInput');
@@ -41,22 +34,20 @@ const settingsModal = document.getElementById('settingsModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-// Veri Yapıları & LocalStorage
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+// Veri Yapıları & LocalStorage (Kategoriler ve Ayarlar yerel kalmaya devam eder)
+let tasks = [];
 let categories = JSON.parse(localStorage.getItem('categories')) || ['Genel', 'İş', 'Kişisel', 'Alışveriş', 'Sağlık'];
 let apiKey = localStorage.getItem('gemini_api_key') || '';
 let userNote = localStorage.getItem('gemini_user_note') || '';
 let currentFilter = 'all';
-let viewMode = 'day'; // 'day' (Seçili Gün) veya 'all' (Tüm Zamanlar)
+let viewMode = 'day'; 
 let currentTheme = localStorage.getItem('app_theme') || 'dark';
 
-// Bugünün Tarihini Formatla (YYYY-MM-DD)
 const getTodayDateStr = () => new Date().toISOString().split('T')[0];
 
 let selectedDate = getTodayDateStr();
 activeDateSelect.value = selectedDate;
 
-// Başlangıç Ayarları
 if (apiKey) apiKeyInput.value = apiKey;
 if (userNote) userProfileInput.value = userNote;
 document.documentElement.setAttribute('data-theme', currentTheme);
@@ -96,7 +87,6 @@ userProfileInput.addEventListener('input', () => {
   localStorage.setItem('gemini_user_note', userProfileInput.value);
 });
 
-// Manuel Kategori Ekleme
 addCategoryBtn.addEventListener('click', () => {
   const newCat = prompt('Yeni kategori adını girin:');
   if (newCat && newCat.trim() !== '') {
@@ -112,7 +102,6 @@ addCategoryBtn.addEventListener('click', () => {
   }
 });
 
-// Tarih ve Görünüm Değişimi
 activeDateSelect.addEventListener('change', (e) => {
   selectedDate = e.target.value;
   renderTasks();
@@ -142,7 +131,7 @@ filterBtns.forEach(btn => {
   });
 });
 
-function updateProgress(filteredList, totalListCount) {
+function updateProgress(filteredList) {
   if (filteredList.length === 0) {
     progressBar.style.width = '0%';
     progressText.textContent = '0/0 Tamamlandı (%0)';
@@ -155,10 +144,20 @@ function updateProgress(filteredList, totalListCount) {
   progressTitle.textContent = viewMode === 'day' ? `${selectedDate} Tarihli Plan` : 'Tüm Zamanların Özeti';
 }
 
+// Supabase'den görevleri çekme
+async function fetchTasksFromSupabase() {
+  const { data, error } = await supabase.from('todos').select('*');
+  if (!error && data) {
+    tasks = data;
+    renderTasks();
+  } else {
+    console.error('Görevler çekilemedi:', error);
+  }
+}
+
 function renderTasks() {
   taskList.innerHTML = '';
 
-  // Görünüm moduna göre görevleri filtrele
   let scopedTasks = tasks;
   if (viewMode === 'day') {
     scopedTasks = tasks.filter(t => t.date === selectedDate);
@@ -171,13 +170,12 @@ function renderTasks() {
   });
 
   finalFiltered.forEach((task) => {
-    const originalIndex = tasks.indexOf(task);
     const li = document.createElement('li');
     if (task.completed) li.classList.add('completed');
 
     li.innerHTML = `
-      <div class="task-info" onclick="toggleTask(${originalIndex})">
-        <span class="task-text">${task.text}</span>
+      <div class="task-info" onclick="toggleTask('${task.id}')">
+        <span class="task-text">${task.title || task.text}</span>
         <div class="task-meta">
           <span class="badge">📁 ${task.category || 'Genel'}</span>
           <span class="badge priority-${task.priority || 'Orta'}">• ${task.priority || 'Orta'}</span>
@@ -185,43 +183,65 @@ function renderTasks() {
           ${task.time ? `<span class="badge">⏰ ${task.time}</span>` : ''}
         </div>
       </div>
-      <button class="delete-btn" onclick="deleteTask(${originalIndex})">Sil</button>
+      <button class="delete-btn" onclick="deleteTask('${task.id}')">Sil</button>
     `;
     taskList.appendChild(li);
   });
 
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-  updateProgress(scopedTasks, tasks.length);
+  updateProgress(scopedTasks);
 }
 
-// Görev Ekleme
-addTaskBtn.addEventListener('click', () => {
+// Supabase'e Görev Ekleme
+addTaskBtn.addEventListener('click', async () => {
   if (taskInput.value.trim() !== '') {
-    tasks.push({
-      text: taskInput.value.trim(),
+    const yeniGorev = {
+      title: taskInput.value.trim(),
       completed: false,
       date: selectedDate,
       time: taskTimeInput.value || '',
       category: taskCategoryInput.value,
       priority: taskPriorityInput.value
-    });
-    taskInput.value = '';
-    taskTimeInput.value = '';
-    renderTasks();
+    };
+
+    const { error } = await supabase.from('todos').insert([yeniGorev]);
+    if (!error) {
+      taskInput.value = '';
+      taskTimeInput.value = '';
+      fetchTasksFromSupabase();
+    } else {
+      alert('Görev eklenirken hata oluştu.');
+    }
   }
 });
 
-function toggleTask(index) {
-  tasks[index].completed = !tasks[index].completed;
-  renderTasks();
+// Supabase'de Görev Durumunu Değiştirme
+async function toggleTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  
+  const newCompletedState = !task.completed;
+  const { error } = await supabase
+    .from('todos')
+    .update({ completed: newCompletedState })
+    .eq('id', id);
+
+  if (!error) {
+    fetchTasksFromSupabase();
+  }
 }
 
-function deleteTask(index) {
-  tasks.splice(index, 1);
-  renderTasks();
+// Supabase'den Görev Silme
+async function deleteTask(id) {
+  const { error } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', id);
+
+  if (!error) {
+    fetchTasksFromSupabase();
+  }
 }
 
-// Otomatik Günlük AI Öneri Sistemi
 async function checkAndFetchDailyAi() {
   if (!apiKey) return;
   const today = getTodayDateStr();
@@ -249,7 +269,6 @@ async function checkAndFetchDailyAi() {
   }
 }
 
-// AI Özellikleri
 if (aiSuggestBtn) {
   aiSuggestBtn.addEventListener('click', async () => {
     if (!apiKey) return alert('Lütfen ayarlardan (⚙️) API Key girin.');
@@ -280,7 +299,7 @@ if (aiAnalyzeBtn) {
     aiLoading.classList.remove('hidden');
     aiAnalysisResult.classList.add('hidden');
 
-    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.text} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
+    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.title || t.text} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
@@ -330,6 +349,6 @@ if (aiDataAnalysisBtn) {
   });
 }
 
-// İlk Çalıştırma
-fetchTasksFromSupabase()
+// Uygulama Başlangıcı
+fetchTasksFromSupabase();
 if (apiKey) checkAndFetchDailyAi();
