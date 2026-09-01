@@ -142,13 +142,14 @@ function updateProgress(filteredList) {
   progressTitle.textContent = viewMode === 'day' ? `${selectedDate} Tarihli Plan` : 'Tüm Zamanların Özeti';
 }
 
+// Verileri Supabase'den Çeken Fonksiyon
 async function fetchTasksFromSupabase() {
   const { data, error } = await supabase.from('todos').select('*');
   if (!error && data) {
     tasks = data;
     renderTasks();
   } else {
-    console.error('Görevler çekilemedi:', error);
+    console.error('Supabase veri çekme hatası:', error);
   }
 }
 
@@ -170,10 +171,9 @@ function renderTasks() {
     const li = document.createElement('li');
     if (task.completed) li.classList.add('completed');
 
-    // title alanı veritabanındaki sütun adımızla birebir eşleştirildi
     li.innerHTML = `
       <div class="task-info" onclick="toggleTask('${task.id}')">
-        <span class="task-text">${task.title || ''}</span>
+        <span class="task-text">${task.title || task.text || ''}</span>
         <div class="task-meta">
           <span class="badge">📁 ${task.category || 'Genel'}</span>
           <span class="badge priority-${task.priority || 'Orta'}">• ${task.priority || 'Orta'}</span>
@@ -189,6 +189,7 @@ function renderTasks() {
   updateProgress(scopedTasks);
 }
 
+// Supabase Destekli Görev Ekleme
 addTaskBtn.addEventListener('click', async () => {
   if (taskInput.value.trim() !== '') {
     const yeniGorev = {
@@ -211,6 +212,7 @@ addTaskBtn.addEventListener('click', async () => {
   }
 });
 
+// Supabase Destekli Tamamlama
 async function toggleTask(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
@@ -226,6 +228,7 @@ async function toggleTask(id) {
   }
 }
 
+// Supabase Destekli Silme
 async function deleteTask(id) {
   const { error } = await supabase
     .from('todos')
@@ -294,7 +297,7 @@ if (aiAnalyzeBtn) {
     aiLoading.classList.remove('hidden');
     aiAnalysisResult.classList.add('hidden');
 
-    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.title} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
+    const promptText = `Tarih: ${selectedDate}. Kullanıcı Hedefi: ${userProfileInput.value || 'Belirtilmedi'}\nAktif Görevler:\n${todayTasks.map(t => `- ${t.title || t.text} (${t.category}, ${t.priority}, ${t.time || 'Saat belirtilmedi'})`).join('\n')}\nBu günlük planı optimize etmek için kısa taktikler ver.`;
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
@@ -344,5 +347,6 @@ if (aiDataAnalysisBtn) {
   });
 }
 
+// İlk Çalıştırma
 fetchTasksFromSupabase();
 if (apiKey) checkAndFetchDailyAi();
